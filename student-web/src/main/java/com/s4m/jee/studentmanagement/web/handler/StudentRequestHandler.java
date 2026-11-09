@@ -33,9 +33,11 @@ public class StudentRequestHandler {
         String number = request.getParameter("numelev");
 
         try {
-            if (number == null || number.trim().isEmpty()
+            if (number == null || number.trim().isEmpty() || number.length() > 255
                     || request.getParameter("nomelev") == null
                     || request.getParameter("nomelev").trim().isEmpty()
+                    || request.getParameter("nomelev").length() > 255
+                    || (request.getParameter("adresselev") != null && request.getParameter("adresselev").length() > 1000)
                     || Integer.parseInt(request.getParameter("agelev")) < 0) {
                 throw new IllegalArgumentException();
             }

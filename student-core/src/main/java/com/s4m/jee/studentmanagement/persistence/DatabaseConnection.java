@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Properties;
 
 /**
  * Manages the shared JDBC connection, statement and result set.
@@ -18,9 +19,9 @@ public class DatabaseConnection {
     public DatabaseConnection() {
     }
 
-    private static final String databaseUrl = System.getenv().getOrDefault("DB_URL", "jdbc:mysql://localhost:8889/ecole");
-    private static final String databaseUser = System.getenv().getOrDefault("DB_USER", "root");
-    private static final String databasePassword = System.getenv().getOrDefault("DB_PASSWORD", "");
+    private static final String databaseUrl = System.getenv("DB_URL");
+    private static final String databaseUser = System.getenv("DB_USER");
+    private static final String databasePassword = System.getenv("DB_PASSWORD");
     private static Connection connection = null;
     private static Statement statement = null;
     private static ResultSet resultSet = null;
@@ -33,14 +34,23 @@ public class DatabaseConnection {
      */
     public static Exception connect() {
         try {
+            if (databaseUrl == null || databaseUrl.isBlank() || databaseUser == null
+                    || databaseUser.isBlank() || databasePassword == null || databasePassword.isEmpty()) {
+                throw new IllegalStateException("DB_URL, DB_USER et DB_PASSWORD requis.");
+            }
             Class.forName("com.mysql.jdbc.Driver");
             statement = null;
             connection = null;
-            connection = DriverManager.getConnection(databaseUrl, databaseUser, databasePassword);
+            Properties settings = new Properties();
+            settings.setProperty("user", databaseUser);
+            settings.setProperty("password", databasePassword);
+            settings.setProperty("connectTimeout", "5000");
+            settings.setProperty("socketTimeout", "15000");
+            connection = DriverManager.getConnection(databaseUrl, settings);
             statement = connection.createStatement();
             return null;
         } catch (Exception e) {
-            System.out.println("ERROR in Connexion to " + databaseUrl + " :" + e.getMessage());
+            System.err.println("Connexion a la base impossible (configuration ou disponibilite).");
             return e;
         }
     }
@@ -55,7 +65,7 @@ public class DatabaseConnection {
             if (statement != null) statement.close();
             if (connection != null) connection.close();
         } catch (Exception e) {
-            System.out.println("ERROR in Connexion closure to " + databaseUrl + " : " + e.getMessage());
+            System.err.println("Echec de fermeture de la connexion JDBC.");
         }
 
         return errorCode;
@@ -95,6 +105,10 @@ public class DatabaseConnection {
      */
     public static void setStatement(Statement statement) {
         DatabaseConnection.statement = statement;
+        if (statement != null) {
+            try { statement.setQueryTimeout(10); }
+            catch (java.sql.SQLException e) { throw new IllegalStateException("Delai JDBC indisponible."); }
+        }
     }
 
     /**

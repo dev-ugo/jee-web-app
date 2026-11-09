@@ -13,10 +13,7 @@
 <main class="page-content">
 <div class="panel result-panel"><p class="eyebrow">SCOLARITÉ</p><h1>Résultat de la recherche</h1>
 
-<%
-String result = (String)request.getAttribute("txtresult");
-out.println(result);
-%>
+<c:out value="${txtresult}" />
 
 </div>
 </main>

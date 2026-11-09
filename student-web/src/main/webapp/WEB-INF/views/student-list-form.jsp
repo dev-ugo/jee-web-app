@@ -15,6 +15,7 @@
 		<h2 class="pgtitre">La liste de tous les élèves</h2>
 		<form name="id" class="form"
 			action="${pageContext.request.contextPath}/students" method="POST">
+            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}" />
 			<input type="submit" value="Valider" class="submit" />
 		</form>
 	</div>

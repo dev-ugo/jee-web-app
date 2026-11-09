@@ -15,6 +15,7 @@
 		<h1 class="pgtitre">Rechercher un élève</h1>
 		<form name="id" class="form"
 			action="${pageContext.request.contextPath}/students/search" method="POST">
+            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}" />
 			<table>
 				<tr>
 					<td><label for="numelev">Numéro d’élève</label></td>

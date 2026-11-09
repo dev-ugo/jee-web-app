@@ -2,11 +2,14 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       DB_URL: jdbc:mysql://db:3306/ecole?useUnicode=true&characterEncoding=UTF-8
       DB_USER: ecole
       DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD in .env}
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy

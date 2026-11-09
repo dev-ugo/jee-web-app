@@ -60,10 +60,10 @@ public class StudentDao {
             }
         } catch (SQLException ex1) {
             result.setActionCode(OperationStatus.SERVER_ERROR);
-            ex1.printStackTrace();
+            System.err.println("Echec de lecture JDBC.");
         } catch (Exception ex2) {
             result.setActionCode(OperationStatus.GENERAL_ERROR);
-            ex2.printStackTrace();
+            System.err.println("Echec de lecture JDBC.");
         }
 
         DatabaseConnection.close();
@@ -189,7 +189,7 @@ public class StudentDao {
             System.out.println("Requete executée");
         } catch (SQLException ex) {
             result = OperationStatus.SERVER_ERROR;
-            System.out.println(ex.getMessage());
+            System.err.println("Echec de modification JDBC (code " + ex.getErrorCode() + ").");
         }
         System.out.println("[" + sql + "] Suppression : Valeur de result = " + result);
         DatabaseConnection.close();
@@ -283,7 +283,7 @@ public class StudentDao {
             } else {
                 result = OperationStatus.SERVER_ERROR;
             }
-            System.out.println(ex.getMessage());
+            System.err.println("Echec de modification JDBC (code " + ex.getErrorCode() + ").");
         }
         DatabaseConnection.close();
         return result;

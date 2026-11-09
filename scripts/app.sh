@@ -4,11 +4,13 @@ cd "$(dirname "$0")/.."
 export CATALINA_HOME="$PWD/Servers/apache-tomcat-9.0.123"
 export CATALINA_BASE="$PWD/.runtime/tomcat"
 export CATALINA_PID="$CATALINA_BASE/tomcat.pid"
-if [[ -f .env ]]; then set -a; source .env; set +a; fi
+source scripts/env.sh
 build() {
   command -v javac >/dev/null || { echo 'JDK 17 ou superieur requis.' >&2; exit 1; }
   mkdir -p "$CATALINA_BASE"/{conf,logs,temp,webapps,work}
   cp "$CATALINA_HOME"/conf/* "$CATALINA_BASE/conf/"
+  # Bind native launches to loopback; Docker publishes its own loopback port.
+  sed -i 's/<Connector port="8080"/<Connector address="'"${TOMCAT_ADDRESS:-127.0.0.1}"'" port="8080"/' "$CATALINA_BASE/conf/server.xml"
   local app="$CATALINA_BASE/webapps/student-web"
   mkdir -p "$app/WEB-INF/classes" "$app/WEB-INF/lib"
   find "$app/WEB-INF/classes" -type f -name '*.class' -delete
@@ -29,7 +31,7 @@ build() {
 }
 case "${1:-start}" in
   build) build ;;
-  start) build; echo 'Application : http://localhost:8080/student-web/'; exec bash "$CATALINA_HOME/bin/catalina.sh" run ;;
+  start) load_database_env; build; echo 'Application : http://localhost:8080/student-web/'; exec bash "$CATALINA_HOME/bin/catalina.sh" run ;;
   stop) exec bash "$CATALINA_HOME/bin/catalina.sh" stop ;;
   *) echo 'Usage : bash scripts/app.sh [build|start|stop]' >&2; exit 1 ;;
 esac

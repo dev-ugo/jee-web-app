@@ -15,6 +15,7 @@ pageEncoding="UTF-8"%>
 		<h1 class="pgtitre">Ajouter un élève</h1>
 		<form name="id" class="form"
 			action="${pageContext.request.contextPath}/students/new" method="POST">
+            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}" />
 			<table>
 				<tr>
 					<td><label for="numelev">Numéro d’élève</label></td>
@@ -37,12 +38,7 @@ pageEncoding="UTF-8"%>
 						class="submit" /></td>
 				</tr>
 			</table>
-			<%
-			String txterro = (String) request.getAttribute("txterro");
-			if(txterro!=null) {
-			out.print(txterro);
-			}
-			%>
+			<c:out value="${txterro}" />
 		</form>
 	</div>
 </main>

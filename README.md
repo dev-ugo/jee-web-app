@@ -11,7 +11,7 @@ Les ports **8080** et **8889** doivent être disponibles. Docker fournit Java, T
 
 ## Démarrage
 
-Depuis le dossier du projet, copier `.env.example` vers `.env` et remplacer les deux mots de passe d’exemple par vos propres mots de passe locaux. Le fichier `.env` est exclu de Git.
+Depuis le dossier du projet, copier `.env.example` vers `.env` et renseigner les deux mots de passe avec vos propres valeurs locales. Le fichier `.env` est exclu de Git.
 
 Puis exécuter :
 
@@ -108,3 +108,25 @@ javadoc -quiet -Xdoclint:all -d .runtime/javadoc \
 
 Ouvrir `.runtime/javadoc/index.html` pour la consulter.
 Les fichiers de compilation et la documentation générée sont stockés dans le dossier `.runtime`, exclu de Git.
+
+## Protections pour la demonstration locale
+
+Les ports Docker sont publies uniquement sur `127.0.0.1`. Le lancement Java direct
+ecoute egalement sur `127.0.0.1`. L'application reste sans compte utilisateur :
+elle est prevue pour une demonstration locale avec des donnees fictives.
+
+Les formulaires utilisent un jeton de session contre les soumissions intersites.
+Les messages affiches sont echappes, les reponses ne sont pas mises en cache et
+le cookie de session utilise HttpOnly et SameSite=Strict. HTTP reste utilisable
+sur localhost, sans configuration de certificat.
+
+Les scripts lisent `.env` comme des donnees uniquement au lancement et pour les
+tests JDBC, jamais pendant la compilation. Utiliser une affectation par ligne
+avec les quatre cles de `.env.example`, sans `export`, substitution de variable
+ni commande shell ; les valeurs peuvent etre entierement entre guillemets.
+Les variables deja exportees dans le terminal sont prioritaires. Les scripts
+restreignent les droits du fichier a son proprietaire (`chmod 600`).
+
+Le pilote MySQL 5.1.7 est conserve pour ce rendu local. Son remplacement,
+l'authentification, HTTPS et la pagination restent hors du perimetre de cette
+demonstration. L'application ne doit pas etre exposee sur un reseau partage.
