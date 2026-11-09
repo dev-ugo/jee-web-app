@@ -99,6 +99,6 @@ jobs:
           build-mode: manual
           queries: security-extended
       - run: bash scripts/app.sh build
-      - uses: github/codeql-action/analyze@32f7c15247fa6542dc765bd40f6a15dc2caeed89 # v4.31.2
+      - uses: github/codeql-action/analyze@0499de31b99561a6d14a36a5f662c2a54f91beee # v4.31.2
         with:
           category: /language:java-kotlin
