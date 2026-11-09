@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:mysql://db:3306/ecole?useUnicode=true&characterEncoding=UTF-8
+      DB_USER: ecole
+      DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD in .env}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/student-web/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: ecole
+      MARIADB_USER: ecole
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Configure DB_ROOT_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:8889:3306"
+    volumes:
+      - ecole-db:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  ecole-db:

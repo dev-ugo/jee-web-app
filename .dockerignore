@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+.runtime
+.metadata
+.agents
+.aws
+.codex
+**/build
+**/bin
+!Servers/apache-tomcat-9.0.123/bin
+!Servers/apache-tomcat-9.0.123/bin/**
+**/.DS_Store
