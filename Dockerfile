@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /project
 
 COPY Servers/apache-tomcat-9.0.123/ Servers/apache-tomcat-9.0.123/
@@ -10,7 +10,7 @@ COPY mysql-connector-java-5.1.7-bin.jar ./
 COPY scripts/app.sh scripts/env.sh scripts/
 RUN TOMCAT_ADDRESS=0.0.0.0 bash scripts/app.sh build
 
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:25-jre
 ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE=/opt/tomcat
 WORKDIR /opt/tomcat
