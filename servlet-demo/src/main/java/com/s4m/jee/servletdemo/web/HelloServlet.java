@@ -40,30 +40,43 @@ public class HelloServlet extends HttpServlet {
         System.out.println("Choix Media : " + selectedMedia);
         String[] selectedComputers = request.getParameterValues("ordi");
 
+        response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         out.println("<html>");
         out.println("<head><title>Ma première page avec servlet</title></head>");
         out.println("<body>");
         out.println("<h1>Ma première page avec servlet</h1>");
         if (email != null && !email.equals("")) {
-            out.println("La valeur du paramètre email est : " + email);
+            out.println("La valeur du paramètre email est : " + escapeHtml(email));
         }
         if (selectedComputers != null) {
             out.println("<UL>");
             for (int i = 0; i < selectedComputers.length; i++) {
-                out.println("<LI>" + selectedComputers[i] + "</LI>");
+                out.println("<LI>" + escapeHtml(selectedComputers[i]) + "</LI>");
             }
             out.println("</UL>");
         }
 
         if (selectedMedia != null && !selectedMedia.equals("")) {
             out.println("<UL>");
-            out.println("<LI>" + selectedMedia + "</LI>");
+            out.println("<LI>" + escapeHtml(selectedMedia) + "</LI>");
             out.println("</UL>");
         }
         out.println("<h2 align=‘center’><font color = ‘red’>Hello World !!!!!!</font></h2>");
         out.println("</body>");
         out.println("</html>");
+    }
+
+    /** Encodes untrusted values before inserting them into HTML text. */
+    private static String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     /**
