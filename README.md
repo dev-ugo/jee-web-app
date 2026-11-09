@@ -109,6 +109,40 @@ javadoc -quiet -Xdoclint:all -d .runtime/javadoc \
 Ouvrir `.runtime/javadoc/index.html` pour la consulter.
 Les fichiers de compilation et la documentation générée sont stockés dans le dossier `.runtime`, exclu de Git.
 
+## Integration continue et securite
+
+Le workflow [CI](.github/workflows/ci.yml) s'execute sur les push, les pull requests,
+chaque lundi et manuellement depuis l'onglet **Actions** de GitHub :
+
+- **Compilation et tests JDBC** : syntaxe Bash, compilation Java 17 des applications,
+  tests du DAO avec une base MariaDB ephemere, puis construction de l'image Docker.
+- **Detection de secrets** : Gitleaks analyse l'historique Git disponible et fait
+  echouer le controle en cas de detection. Les valeurs detectees sont masquees.
+  Un ancien secret peut donc bloquer le premier passage : le revoquer et traiter
+  l'historique concerne avant de relancer.
+- **Analyse de securite Java** : CodeQL analyse le code compile ; les alertes sont
+  consultables dans **Security > Code scanning**. Une alerte ne fait pas a elle
+  seule echouer le job : configurer les regles de protection GitHub pour bloquer
+  les fusions selon les alertes souhaitees.
+
+Aucun secret GitHub n'est necessaire : les identifiants de test sont publics,
+reserves au service MariaDB detruit a la fin du job. Les actions sont figees par
+commit, Gitleaks par digest, et les jetons ont des permissions limitees.
+[Dependabot](.github/dependabot.yml) propose chaque semaine des mises a jour des
+actions GitHub et des images du Dockerfile et de Compose. La version et le digest
+de Gitleaks dans le workflow doivent etre mis a jour manuellement.
+
+Apres publication de ces fichiers, verifier le premier passage dans **Actions**.
+Pour rendre les controles obligatoires avant fusion, ajouter les trois controles
+CI aux regles de protection de la branche principale. CodeQL est disponible pour
+les depots publics ; un depot prive necessite une offre GitHub compatible avec
+Code Security et son activation. Desactiver une eventuelle configuration CodeQL
+par defaut avant d'utiliser ce workflow avance.
+
+Cette CI ne realise pas d'audit des vulnerabilites des JAR copies manuellement
+(notamment le pilote MySQL 5.1.7), ni des paquets systeme de l'image Docker.
+Dependabot ne met pas a jour ces JAR en l'absence de manifeste Maven ou Gradle.
+
 ## Protections pour la demonstration locale
 
 Les ports Docker sont publies uniquement sur `127.0.0.1`. Le lancement Java direct

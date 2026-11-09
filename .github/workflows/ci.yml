@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 7 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Compilation et tests JDBC
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      db:
+        image: mariadb:10.11
+        env:
+          MARIADB_DATABASE: ecole
+          MARIADB_USER: ecole
+          # Identifiants publics reserves a la base ephemere de CI.
+          MARIADB_PASSWORD: ci_test_password
+          MARIADB_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verifier la syntaxe Bash
+        run: |
+          for script in scripts/*.sh; do
+            bash -n "$script"
+          done
+      - name: Initialiser la base de test
+        env:
+          DB_CONTAINER: ${{ job.services.db.id }}
+        run: docker exec -i "$DB_CONTAINER" mariadb -uroot -pci_root_password ecole < database/schema.sql
+      - name: Compiler les applications et tester le DAO
+        env:
+          DB_URL: jdbc:mysql://127.0.0.1:${{ job.services.db.ports['3306'] }}/ecole?useUnicode=true&characterEncoding=UTF-8
+          DB_USER: ecole
+          DB_PASSWORD: ci_test_password
+        run: bash scripts/test.sh
+      - name: Construire l'image Docker
+        run: docker build --tag jee-web-app:ci .
+
+  secrets:
+    name: Detection de secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Analyser l'historique Git avec Gitleaks
+        # Mettre a jour explicitement le tag et le digest ensemble.
+        run: >-
+          docker run --rm --network none
+          -v "$GITHUB_WORKSPACE:/repo:ro"
+          ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:b109bc5f8f76a38196a3e413704fc5b9e3c32360bce4e4b603bd6f45b3721dbb
+          git /repo --redact --exit-code 1
+
+  codeql:
+    name: Analyse de securite Java
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: github/codeql-action/init@32f7c15247fa6542dc765bd40f6a15dc2caeed89 # v4.31.2
+        with:
+          languages: java-kotlin
+          build-mode: manual
+          queries: security-extended
+      - run: bash scripts/app.sh build
+      - uses: github/codeql-action/analyze@32f7c15247fa6542dc765bd40f6a15dc2caeed89 # v4.31.2
+        with:
+          category: /language:java-kotlin
