@@ -27,14 +27,33 @@ public class StudentDaoSmokeTest {
     public static void main(String[] args) {
         String id = "TEST_" + UUID.randomUUID().toString();
         String name = "O'Neil_" + id;
+        String quotedId = id + "'quoted";
+        // On an unsafe query this predicate targets only this test's own student.
+        String injectedNumber = "' OR num = '" + id + "' -- ";
         try {
             check(StudentDao.findByNumber(id).getActionCode() == 0, "Absent");
             check(StudentDao.add(new Student(id, 0, name, 22, "Rue de l'ecole")) == 1, "Ajout");
             check(name.equals(StudentDao.findByNumber(id).getStudent().getName()), "Recherche numero");
             check(StudentDao.add(new Student(id, 0, name, 22, "Test")) == OperationStatus.GENERAL_ERROR, "Doublon");
             check(StudentDao.findByName(name).getStudents().size() == 1, "Recherche nom");
-            check(StudentDao.updateAddressByNumber(id, "Paris") == 1, "Adresse");
-            check("Paris".equals(StudentDao.findByNumber(id).getStudent().getAddress()), "Lecture adresse");
+            String address = "Rue de l'école; SELECT 1 --";
+            check(StudentDao.updateAddressByNumber(id, address) == 1, "Adresse avec apostrophe");
+            check(address.equals(StudentDao.findByNumber(id).getStudent().getAddress()), "Lecture adresse");
+            check(StudentDao.findByNumber(injectedNumber).getActionCode() == OperationStatus.EMPTY_RESULT,
+                "Injection recherche numero");
+            check(StudentDao.findByName(injectedNumber).getActionCode() == OperationStatus.EMPTY_RESULT,
+                "Injection recherche nom");
+            check(StudentDao.updateAddressByNumber(injectedNumber, "Injected") == 0, "Injection modification adresse");
+            check(address.equals(StudentDao.findByNumber(id).getStudent().getAddress()), "Adresse preservee");
+            check(StudentDao.updateRoomNumberByNumber(injectedNumber, 123456) == 0, "Injection modification salle");
+            check(StudentDao.findByNumber(id).getStudent().getRoomNumber() == 0, "Salle preservee");
+            check(StudentDao.deleteByNumber(injectedNumber) == 0, "Injection suppression");
+            check(StudentDao.findByNumber(id).getActionCode() == OperationStatus.SUCCESS_RESULT, "Eleve preserve");
+            check(StudentDao.add(new Student(quotedId, 0, name, 22, address)) == 1, "Numero avec apostrophe");
+            check(StudentDao.updateAddressByNumber(quotedId, address) == 1, "Adresse par numero avec apostrophe");
+            check(StudentDao.updateRoomNumberByNumber(quotedId, 987655) == 1, "Salle par numero avec apostrophe");
+            check(StudentDao.findByNumber(quotedId).getStudent().getRoomNumber() == 987655, "Lecture numero avec apostrophe");
+            check(StudentDao.deleteByNumber(quotedId) == 1, "Suppression numero avec apostrophe");
             check(StudentDao.updateRoomNumberByNumber(id, 987654) == 1, "Chambre");
             check(StudentDao.findByRoomNumber(987654).getStudents().stream().anyMatch(e -> id.equals(e.getNumber())), "Recherche chambre");
             check(StudentDao.findByBirthYear(Calendar.getInstance().get(Calendar.YEAR) - 22)
@@ -44,6 +63,7 @@ public class StudentDaoSmokeTest {
             check(StudentDao.deleteByNumber(id) == 0, "Suppression absent");
             System.out.println("OK : tous les parcours DAO");
         } finally {
+            StudentDao.deleteByNumber(quotedId);
             StudentDao.deleteByNumber(id);
         }
     }

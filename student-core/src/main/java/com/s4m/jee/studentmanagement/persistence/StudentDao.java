@@ -84,10 +84,13 @@ public class StudentDao {
 
         DatabaseConnection.connect();
 
-        String sql = "Select * from eleve where nom = '" + studentName.replace("'", "''") + "'";
+        String sql = "SELECT num, no, nom, age, adresse FROM eleve WHERE nom = ?";
 
         try {
-            rs = DatabaseConnection.getStatement().executeQuery(sql);
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            query.setString(1, studentName);
+            rs = query.executeQuery();
             while (rs.next()) {
                 student = new Student();
                 student.setNumber(rs.getString(1));
@@ -128,12 +131,15 @@ public class StudentDao {
         ArrayList<Student> students = new ArrayList<>();
         StudentListResult result = new StudentListResult();
 
-        String sql = "SELECT num, no, nom, age, adresse FROM eleve where no = " + roomNumber + " ";
+        String sql = "SELECT num, no, nom, age, adresse FROM eleve WHERE no = ?";
 
         try {
             DatabaseConnection.connect();
 
-            DatabaseConnection.setResultSet(DatabaseConnection.getStatement().executeQuery(sql));
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            query.setInt(1, roomNumber);
+            DatabaseConnection.setResultSet(query.executeQuery());
 
             while (DatabaseConnection.getResultSet().next()) {
                 Student student = new Student();
@@ -174,9 +180,12 @@ public class StudentDao {
 
         DatabaseConnection.connect();
 
-        String sql = "DELETE FROM eleve WHERE num = '" + number + "' ";
+        String sql = "DELETE FROM eleve WHERE num = ?";
         try {
-            result = DatabaseConnection.getStatement().executeUpdate(sql);
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            query.setString(1, number);
+            result = query.executeUpdate();
             System.out.println("Requete executée");
         } catch (SQLException ex) {
             result = OperationStatus.SERVER_ERROR;
@@ -197,9 +206,13 @@ public class StudentDao {
     public static synchronized int updateAddressByNumber(String number, String newAddress) {
         int result = -1;
         DatabaseConnection.connect();
-        String sql = "UPDATE eleve SET adresse = '" + newAddress + "' WHERE num ='" + number + "' ";
+        String sql = "UPDATE eleve SET adresse = ? WHERE num = ?";
         try {
-            result = DatabaseConnection.getStatement().executeUpdate(sql);
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            query.setString(1, newAddress);
+            query.setString(2, number);
+            result = query.executeUpdate();
         } catch (SQLException e) {
             result = -1;
         }
@@ -219,9 +232,13 @@ public class StudentDao {
         int result = -1;
         DatabaseConnection.connect();
 
-        String sql = "UPDATE eleve SET no = " + newRoomNumber + " WHERE num ='" + number + "' ";
+        String sql = "UPDATE eleve SET no = ? WHERE num = ?";
         try {
-            result = DatabaseConnection.getStatement().executeUpdate(sql);
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            query.setInt(1, newRoomNumber);
+            query.setString(2, number);
+            result = query.executeUpdate();
             System.out.println("Requete executee");
         } catch (SQLException ex0) {
             result = -1;
@@ -286,12 +303,15 @@ public class StudentDao {
         int year = c.get(Calendar.YEAR);
 
         int studentAge = year - birthYear;
-        String sql = "SELECT num, no, nom, age, adresse FROM eleve WHERE age =" + studentAge + " ";
+        String sql = "SELECT num, no, nom, age, adresse FROM eleve WHERE age = ?";
 
         DatabaseConnection.connect();
 
         try {
-            DatabaseConnection.setResultSet(DatabaseConnection.getStatement().executeQuery(sql));
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            query.setInt(1, studentAge);
+            DatabaseConnection.setResultSet(query.executeQuery());
             while (DatabaseConnection.getResultSet().next()) {
 
                 Student student = new Student();
@@ -333,7 +353,9 @@ public class StudentDao {
         DatabaseConnection.connect();
 
         try {
-            DatabaseConnection.setResultSet(DatabaseConnection.getStatement().executeQuery(sql));
+            PreparedStatement query = DatabaseConnection.getConnection().prepareStatement(sql);
+            DatabaseConnection.setStatement(query);
+            DatabaseConnection.setResultSet(query.executeQuery());
             while (DatabaseConnection.getResultSet().next()) {
 
                 Student student = new Student();
